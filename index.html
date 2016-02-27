@@ -1,0 +1,278 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Formalin</title>
+<script  type="text/javascript">
+window.onload=function(){
+	var shadowcvs=document.getElementById("shadowcvs");
+	var maincvs=document.getElementById("maincvs");
+	var shadowctx=shadowcvs.getContext("2d");
+	var mainctx=maincvs.getContext("2d");
+	sw=document.documentElement.clientWidth;
+	sh=document.documentElement.clientHeight;
+	shadowcvs.width=sw;
+	shadowcvs.height=sh;
+	maincvs.width=sw;
+	maincvs.height=sh;
+	var f_size=16;
+	var f_half=f_size/2;
+	var tab_index=2;
+	var text="";
+	shadowctx.textBaseline="top";
+	shadowctx.textAlign="left";
+	var calet_w=1;
+	var calet_opa=0;
+	var cc=0;
+	var cy=0;
+	var cx=0;
+	var c_line=0;
+	var c_index=0;
+	var copy_cc=0;
+	var insertflag=false;
+	var copyflag=false;
+	/* KeyInput */
+	var inputflag=false;
+	var keyflag=[false,false] //shift,ctrl
+
+	setInterval(function(){
+	  if(!inputflag){
+		  shadowctx.clearRect(0,0,sw,sh);
+		  shadowctx.fillStyle="rgba(10,10,10,1)";
+		  shadowctx.fillRect(0,0,sw,sh);
+		  shadowctx.fillStyle="#fff";
+		  shadowctx.font=f_size+"px monospace,Monaco,Consolas,'Courier New','ＭＳ ゴシック'";
+		  c_line=0;
+		  c_index=0;
+		  for(var i=(-1); i<text.length; i++){
+			  if(i>=0){
+				  if(text.charAt(i)=="\n"){
+					  c_line++;
+					  c_index=0;
+				  }else{
+					  if(copyflag){
+			        if(copy_cc<=i&&i<cc){
+			          shadowctx.fillStyle="rgba(255,255,255,0.5)";
+			          shadowctx.fillRect(c_index*f_half,c_line*f_size,f_half,f_size);
+			        }else if(cc<=i&&i<copy_cc){
+			          shadowctx.fillStyle="rgba(255,255,255,0.5)";
+			          shadowctx.fillRect(c_index*f_half,c_line*f_size,f_half,f_size);
+			        }
+			      }
+					  shadowctx.fillText(text.charAt(i),f_half*c_index,f_size*c_line);
+					  c_index++;
+					  shadowctx.fillStyle="#fff";
+				  }
+			  }
+			  if(i==cc-1){
+			  	cy=c_line;
+			    cx=c_index;
+				  if(calet_opa<30){
+					  if(calet_opa<20){
+					    if(!copyflag) shadowctx.fillRect(cx*f_half,cy*f_size,calet_w,f_size);
+					  }
+				  }else{
+					  calet_opa=0;
+				  }
+          if(insertflag){
+					  shadowctx.fillStyle="#000";
+				  }else{
+					  calet_opa++;
+				  }
+			  }
+		  }
+		  mainctx.drawImage(shadowcvs,0,0);
+		}
+	},32);
+
+	/* KeyInput Function */
+	function KeyInput(input_e){
+	  inputflag=true;
+		if(insertflag){
+			text=text.substring(0,cc)+text.substring(cc+1,text.length);
+		}
+		text=text.substring(0,cc)+input_e+text.substring(cc,text.length);
+		if(!insertflag){
+			cc++;
+		}
+		inputflag=false;
+	}
+	function CursorKey(input_e){
+		inputflag=true;
+    if(keyflag[0]&&!copyflag){
+      copyflag=true;
+      copy_cc=cc;
+    }
+		/* Cursor */
+		if(input_e=="left") cc--; //←
+		if(input_e=="right") cc++; //→
+		if(input_e=="up"){  //↑
+			c_line=0;
+			c_index=0;
+			for(var i=(-1); i<text.length; i++){
+				if(i>=0){
+					if(text.charAt(i)=="\n"){
+						c_line++;
+						c_index=0;
+					}else{
+						c_index++;
+					}
+				}
+				if(cy-1==c_line&&cx==c_index){
+					cc=i+1;
+				}else if(cy-1==c_line&&cx>c_index){
+					cc=i+1;
+				}
+			}
+		}
+		if(input_e=="down"){  //↓
+			c_line=0;
+			c_index=0;
+			for(var i=(-1); i<text.length; i++){
+				if(i>=0){
+					if(text.charAt(i)=="\n"){
+						c_line++;
+						c_index=0;
+					}else{
+						c_index++;
+					}
+				}
+				if(cy+1==c_line&&cx==c_index){
+					cc=i+1;
+				}else if(cy+1==c_line&&cx>c_index){
+					cc=i+1;
+				}
+			}
+		}
+		if(!insertflag){  //copyflag
+		  if(!keyflag[0]){
+	      copyflag=false;
+	    }
+	  }
+	  inputflag=false;
+	}
+	
+	function CopyToClip(){
+	  if(copyflag){
+	    alert("Copy");
+	    if(copy_cc-cc){
+	      //text.substring(cc,copy_cc);
+	    }else{
+        //text.substring(copy_cc,cc);
+	    }
+	  }
+	}
+	
+	document.onkeydown=function(e){
+		console.log(e.keyCode);
+		if(e.keyCode==17) keyflag[1]=true; //ctrl
+		if(e.keyCode==16) keyflag[0]=true; //shift
+		if(e.keyCode==37&&cc>0) CursorKey("left"); //←
+		if(e.keyCode==39&&cc<text.length) CursorKey("right"); //→
+		if(e.keyCode==38) CursorKey("up") //↑
+		if(e.keyCode==40) CursorKey("down") //↓
+		if(keyflag[1]){
+		  if(e.keyCode>=67) CopyToClip();
+		}else if(keyflag[0]){
+			if(e.keyCode>=65&&e.keyCode<=90) KeyInput(String.fromCharCode(e.keyCode));
+			if(e.keyCode>=49&&e.keyCode<=57) KeyInput(String.fromCharCode(e.keyCode-16));
+			if(e.keyCode==186||e.keyCode==187) KeyInput(String.fromCharCode(e.keyCode-144));
+			if(e.keyCode>=188&&e.keyCode<=191) KeyInput(String.fromCharCode(e.keyCode-128));
+			if(e.keyCode==192) KeyInput(String.fromCharCode(e.keyCode-96));
+			if(e.keyCode>=219&&e.keyCode<=222) KeyInput(String.fromCharCode(e.keyCode-96));
+			if(e.keyCode==226) KeyInput(String.fromCharCode(e.keyCode-131));
+		}else{
+			if(e.keyCode==32) KeyInput(String.fromCharCode(e.keyCode));
+			if(e.keyCode>=65&&e.keyCode<=92) KeyInput(String.fromCharCode(e.keyCode+32));
+			if(e.keyCode>=48&&e.keyCode<=64) KeyInput(String.fromCharCode(e.keyCode));
+			if(e.keyCode==186||e.keyCode==187) KeyInput(String.fromCharCode(e.keyCode-128));
+			if(e.keyCode==192) KeyInput(String.fromCharCode(e.keyCode-128));
+			if(e.keyCode>=188&&e.keyCode<=190) KeyInput(String.fromCharCode(e.keyCode-144));
+			if(e.keyCode==191) KeyInput(String.fromCharCode(e.keyCode-144));
+			if(e.keyCode>=219&&e.keyCode<=222) KeyInput(String.fromCharCode(e.keyCode-128));
+			if(e.keyCode==226) KeyInput(String.fromCharCode(e.keyCode-134));
+			if(e.keyCode==13) KeyInput("\n"); //enter
+			if(e.keyCode==9){	//Tab
+			  for(var i=0; i<tab_index; i++){
+				  KeyInput(String.fromCharCode(32));
+				}
+				calet_opa=0;
+			}
+			if(e.keyCode==8&&cc>0){	//backspace
+				text=text.substring(0,cc-1)+text.substring(cc,text.length);
+				cc--;
+			}
+			if(e.keyCode==46&&cc>0)text=text.substring(0,cc)+text.substring(cc+1,text.length); //delete
+		}
+		if(e.keyCode==45){
+			if(insertflag){
+				insertflag=false;
+				calet_w=1;
+			}else{
+				insertflag=true;
+				calet_w=f_half;
+			}
+		}
+		calet_opa=0;
+		return false;
+	}
+
+	document.onkeyup=function(e){
+		if(e.keyCode==17) keyflag[1]=false; //ctrl
+		if(e.keyCode==16) keyflag[0]=false; //shift
+	}
+
+	window.onresize=function(){
+		sw=document.documentElement.clientWidth;
+		sh=document.documentElement.clientHeight;
+		shadowcvs.width=sw;
+		shadowcvs.height=sh;
+		maincvs.width=sw;
+		maincvs.height=sh;
+	}
+}
+</script>
+<link rel="stylesheet" href="reset.css">
+<style>
+html{
+	width:100%;
+	height:100%;
+}
+body{
+  width:100%;
+	height:100%;
+	overflow:hidden;
+}
+#wrap{
+	width:100%;
+	height:100%;
+}
+#editor{
+	width:100%;
+	height:100%;
+	position:absolute;
+	overflow-x:hidden;
+	overflow-y:scroll;
+}
+canvas{
+	position:absolute;
+}
+#edit{
+	position:absolute;
+	width:100%;
+	height:100%;
+}
+#shadowcvs{
+	visibility:hidden;
+}
+</style>
+</head>
+<body>
+  <div id="wrap">
+    <div id="editor">
+      <canvas id="shadowcvs"></canvas>
+      <canvas id="maincvs"></canvas>
+    </div>
+  </div>
+</body>
+</html>
